@@ -2,7 +2,7 @@
   "name": "code_with_backend",
   "version": "1.0.0",
   "description": "a backend at yt app",
-  "type": "commonjs",
+  "type": "module",
   "keywords": [
     "javascript",
     "backend",
@@ -12,10 +12,13 @@
   "author": "prabhuDev",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon -r dotenv/config src/index.js"
   },
   "devDependencies": {
     "nodemon": "^3.1.11",
     "prettier": "^3.7.4"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
   }
 }
