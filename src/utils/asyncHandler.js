@@ -1,9 +1,10 @@
 //const asyncHandler = ()=>{}
 
-const asyncHandler = requestHandler => {
-    return (req, res, next) => {
-        Promise.resolve(requestHandler(req, res, next)
-        ).catch(err => next(err));
+const asyncHandler = (requestHandler) => {
+    (req, res, next) => {
+        Promise
+        .resolve(requestHandler(req, res, next))
+        .catch(err => next(err));
     };
 };
 
@@ -12,9 +13,9 @@ export { asyncHandler };
 // higher order function
 //const asyncHandler = () => {};
 //or
-//const asyncHandler = (fun) => { () => {}};
+//const asyncHandler = (fn) => { () => {}};
 // remove curly brackets
-
+//const asyncHandler = (fn) => async () => {};
 /*
 const asyncHandler = (fn) => async (req, res, next) => {
   try{
