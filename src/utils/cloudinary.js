@@ -1,21 +1,28 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 
-const cloudCof = cloudinary.config({
-    cloud_name: "process.env.CLOUDINARY_CLOUD_NAME",
-    api_key: "process.env.CLOUDINARY_API_KEY",
-    api_secret: "process.env.CLOUDINARY_API_SECRET"
+console.log("CLOUDINARY ENV CHECK →", {
+  name: process.env.CLOUDINARY_CLOUD_NAME,
+  key: process.env.CLOUDINARY_API_KEY ? "OK" : "MISSING",
+  secret: process.env.CLOUDINARY_API_SECRET ? "OK" : "MISSING",
 });
 
-const uploadOnCloudinary = async localFilePath => {
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const uploadOnCloudinary = async (localFilePath) => {
     try {
         if (!localFilePath) return null;
         //upload on cloudinary
         const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: " true"
+            resource_type: "auto"
         });
         // file is uploaded
-        console.log(response.url, "File uploaded succesfuly:)");
+        console.log(response.url, "File uploaded successfuly:)");
         return response;
     } catch (error) {
         fs.unlinkSync(localFilePath); //remove the failed upload and save local device
@@ -25,16 +32,3 @@ const uploadOnCloudinary = async localFilePath => {
 
 export {uploadOnCloudinary}
 
-/*
-// temp code
-
-cloudinary.uploader.upload(
-    "https://res.cloudinary.com/demo/image/upload/v1651585298/happy_people.jpg",
-    {
-        product_id: "img_id"
-    },
-    function (error, result) {
-        console.log(result);
-    }
-);
-*/

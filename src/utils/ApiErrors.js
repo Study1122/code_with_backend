@@ -1,6 +1,6 @@
+//code for custom api error class
 class ApiErrors extends Error{
   constructor(
-    
     statusCode,
     message= "something went wrong!!!",
     errors=[],
