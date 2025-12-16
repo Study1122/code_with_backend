@@ -12,7 +12,7 @@
   "author": "prabhuDev",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon -r dotenv/config src/index.js"
+    "dev": "nodemon src/index.js"
   },
   "devDependencies": {
     "nodemon": "^3.1.11",
