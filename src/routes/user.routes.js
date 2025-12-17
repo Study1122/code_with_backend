@@ -6,7 +6,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 const router = Router();
 
 router.route("/register").post(
-    //middleware ;- upload a filed name 'avatar' and 'coverPhoto' from form-data
+    //middleware ;- upload a filed name 'avatar' and 'coverImage' from form-data
     upload.fields([
         {name: 'avatar', maxCount: 1},
         {name: 'coverImage', maxCount: 1}

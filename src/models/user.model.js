@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
@@ -51,9 +51,9 @@ const userSchema = new Schema(
 
 //meddleware for encrypting and decrypting pass
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+    if (!this.isModified("password")) return next;
     this.password = await bcrypt.hash(this.password, 10);
-    next();
+    return next;
 });
 
 //custom method injection to check password
