@@ -46,7 +46,7 @@ const userSchema = new Schema(
             type: String
         }
     },
-    { timesStamps: true }
+    { timestamps: true }
 );
 
 //meddleware for encrypting and decrypting pass
@@ -89,4 +89,9 @@ userSchema.methods.generateRefreshToken = function () {
         }
     );
 };
+// create method for compare password
+userSchema.methods.comparePassword = async function(candidatePassword){
+    return await bcrypt.compare(candidatePassword, this.password);
+}
+
 export const User = mongoose.model("User", userSchema);

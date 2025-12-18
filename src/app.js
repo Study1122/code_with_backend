@@ -18,10 +18,13 @@ app.use(
 );
 
 app.use(
-    express.urlencoded({
-        extended: true,
-        limit: process.env.USE_LIMIT
-    })
+    express.urlencoded(
+        {
+            extended: true,
+            limit: process.env.USE_LIMIT
+        },
+        { extended: true }
+    )
 );
 app.use(cookieParser());
 app.use(express.static("public"));
