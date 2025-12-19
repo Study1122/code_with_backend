@@ -10,15 +10,15 @@ import jwt from "jsonwebtoken";
 const authMiddleware = asyncHandler(async (req, res, next) => {
     //get token from cookies
     const authHeader = req.headers.authorization;
+
     const token =
     req.cookies?.accessToken ||
     (authHeader && authHeader.startsWith("Bearer ")
         ? authHeader.split(" ")[1]
         : null);
     if(!token){
-        throw new ApiErrors(401, "You are not logged in!!!");   
+        throw new ApiErrors(401, "You are not logged in!!!");
     }
-
     //verify token
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     
