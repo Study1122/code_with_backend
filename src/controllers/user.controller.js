@@ -50,6 +50,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!avatarLocalPath) {
         throw new ApiErrors(400, "Avatar is required");
     }
+    console.log(req.files)
 
     //upload image to cloudinary, avatar'
     const avatarUploadResponse = await uploadOnCloudinary(avatarLocalPath);
@@ -119,7 +120,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     //check user exists
     const existingUser = await User.findOne({ 
-        $or: [{ email }, { username }]
+        $or: [{ email: email?.toLowerCase() }, { username: username?.toLowerCase() }]
      });
     if(!existingUser){
         throw new ApiErrors(404, "This user does not exist!!!");
@@ -135,7 +136,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     //attach refresh token to db
     existingUser.refreshTokens = refreshToken;
-    await existingUser.save();
+    await existingUser.save({ validateBeforeSave: false });
 
     //remove password and refresh token field from reaponse
     const loggedUser = await User.findById(existingUser._id).select(
@@ -144,9 +145,10 @@ const loginUser = asyncHandler(async (req, res) => {
 
     //cookies options
     const cookiesOptions = {
-        httpOnly: true,
-        secure: true
-    }
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax"
+    };
 
     return res
     .status(200)
@@ -162,15 +164,9 @@ const logoutUser = asyncHandler(async (req, res) => {
     //get user from auth middleware
     const updatedUser = await User.findByIdAndUpdate(
         req.user._id,
-        { 
-            $unset: { refreshToken: 1 } 
-        },
-        {
-            new: true
-        }
+        { $unset: { refreshTokens: 1 } },
+        { new: true }
     )
-    console.log("Updated User:", updatedUser);
-    
     //cookies options
     const cookiesOptions = {
         httpOnly: true,
@@ -180,7 +176,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     return res
     .status(200)
     .clearCookie("accessToken", cookiesOptions)
-    .clearCookie("refreshTokens", cookiesOptions)
+    .clearCookie("refreshToken", cookiesOptions)
     .json(new ApiResponse(200, "User logged out successfully", {}));
 });
 
