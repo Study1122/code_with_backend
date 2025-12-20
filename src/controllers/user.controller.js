@@ -51,7 +51,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!avatarLocalPath) {
         throw new ApiErrors(400, "Avatar is required");
     }
-    console.log(req.files)
+    //console.log(req.files)
 
     //upload image to cloudinary, avatar'
     const avatarUploadResponse = await uploadOnCloudinary(avatarLocalPath);
@@ -59,8 +59,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!avatarUploadResponse?.url) {
         //console.log("FILES →", req.files);
         throw new ApiErrors(
-            422,
-            "Avatar Image upload failed, please try again later"
+            422, "Avatar Image upload failed, please try again later"
         );
     }
 
@@ -138,6 +137,7 @@ const loginUser = asyncHandler(async (req, res) => {
     //attach refresh token to db
     existingUser.refreshTokens.push(refreshToken);
     await existingUser.save({ validateBeforeSave: false });
+
 
     //remove password and refresh token field from reaponse
     const loggedUser = await User.findById(existingUser._id).select(

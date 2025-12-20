@@ -42,7 +42,11 @@ const userSchema = new Schema(
             type: String,
             required: [true, "password is required!!"]
         },
-        refreshTokens: [ String ]
+        refreshTokens: [
+            {
+                type: String
+            }
+        ]
     },
     { timestamps: true }
 );
@@ -51,7 +55,7 @@ const userSchema = new Schema(
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next;
     this.password = await bcrypt.hash(this.password, 10);
-    return next;
+    return next();
 });
 
 //custom method injection to check password

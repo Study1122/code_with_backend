@@ -1,8 +1,8 @@
 // set routes
 import { Router } from "express";
-import { registerUser, loginUser, logoutUser, refreshedAccessToken } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { registerUser, loginUser, logoutUser, refreshedAccessToken } from "../controllers/user.controller.js";
 
 const router = Router();
 
