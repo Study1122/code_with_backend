@@ -1,6 +1,6 @@
 // set routes
 import { Router } from "express";
-import { registerUser, loginUser, logoutUser } from "../controllers/user.controller.js";
+import { registerUser, loginUser, logoutUser, refreshedAccessToken } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
@@ -15,7 +15,6 @@ router.route("/register").post(
     registerUser);
 
 router.route("/login").post(
-    
     loginUser
 );
 
@@ -23,5 +22,9 @@ router.route("/logout").post(
     authMiddleware,
     logoutUser
 );
+
+router.route("/refresh_token").post(
+    refreshedAccessToken
+  )
 
 export default router;

@@ -3,6 +3,7 @@ import { ApiErrors } from "../utils/ApiErrors.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
 
 //create a metod for genrating access and rerresh tokens
 const generateAccessAndRefreshTokens = async (userId) =>{
@@ -11,9 +12,9 @@ const generateAccessAndRefreshTokens = async (userId) =>{
         if(!user){
             throw new ApiErrors(404, "User not found");
         }
-        const accessTokenquery = user.generateAccessToken();
-        const refreshTokenquery = user.generateRefreshToken();
-        return { accessToken: accessTokenquery, refreshToken: refreshTokenquery };
+        const accessToken = user.generateAccessToken();
+        const refreshToken= user.generateRefreshToken();
+        return { accessToken, refreshToken };
     } catch (error) {
         throw new ApiErrors(500, "Token generation failed");
     }
@@ -132,10 +133,10 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     //generate tokens
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(existingUser._id);
-
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(existingUser._id)
+    
     //attach refresh token to db
-    existingUser.refreshTokens = refreshToken;
+    existingUser.refreshTokens.push(refreshToken);
     await existingUser.save({ validateBeforeSave: false });
 
     //remove password and refresh token field from reaponse
@@ -154,31 +155,87 @@ const loginUser = asyncHandler(async (req, res) => {
     .status(200)
     .cookie("refreshToken", refreshToken, cookiesOptions)
     .cookie("accessToken", accessToken, cookiesOptions)
-    .json(new ApiResponse(200,`${existingUser.username} logged in successfully`, {
+    .json(new ApiResponse(200,`${existingUser.username} Login successful`, {
             existingUser: loggedUser, accessToken, refreshToken
         })
     );
 });
 //logout user controller
 const logoutUser = asyncHandler(async (req, res) => {
-    //get user from auth middleware
-    const updatedUser = await User.findByIdAndUpdate(
-        req.user._id,
-        { $unset: { refreshTokens: 1 } },
-        { new: true }
-    )
-    //cookies options
-    const cookiesOptions = {
-        httpOnly: true,
-        secure: true
-    }
+  const incomingRefreshToken = req.cookies?.refreshToken;
 
-    return res
-    .status(200)
-    .clearCookie("accessToken", cookiesOptions)
-    .clearCookie("refreshToken", cookiesOptions)
-    .json(new ApiResponse(200, `${req.user.username} logged out successfully`, {}));
+  const user = await User.findById(req.user._id);
+  user.refreshTokens = user.refreshTokens.filter(
+    token => token !== incomingRefreshToken
+  );
+
+  await user.save({ validateBeforeSave: false });
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  };
+
+  return res
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .json(new ApiResponse(200, "Logged out successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+//refreshToken end point 
+const refreshedAccessToken = asyncHandler( async (req, res) => {
+  const incomingRefreshedToken = req.cookies.refreshToken || req.body.refreshToken
+  if(!incomingRefreshedToken){
+    throw new ApiErrors(401, "Refresh Token missing!!!")
+  }
+  //console.log("Token:", incomingRefreshedToken)
+  let decodedRefreshedToken;
+  try{
+    decodedRefreshedToken = await jwt.verify(
+      incomingRefreshedToken, 
+      process.env.REFRESH_TOKEN_SECRET);
+  }catch(error){
+    throw new ApiErrors(401, "Invalid refresh tokens!!!", {error})
+  }
+  
+  //fetch data from db using decodedRefreshedToken
+  const user = await User.findById(decodedRefreshedToken?._id)
+  //check refresh Tokens
+  if(!user || !user.refreshTokens.includes(incomingRefreshedToken)){
+    throw new ApiErrors(401, "Token reuse detected");
+  }
+  
+  //generate new refresh Token
+  const {accessToken, refreshToken} = await  generateAccessAndRefreshTokens(user._id)
+  
+  // remove old refresh token
+  user.refreshTokens = user.refreshTokens.filter(
+    token => token !== incomingRefreshedToken
+  );
+  
+  // add new refresh token
+  user.refreshTokens.push(refreshToken);
+  
+  // save once
+  await user.save({ validateBeforeSave: false });
+    
+  //console.log(`OldRedreshToken: ${incomingRefreshedToken}, newRefreshToken: ${refreshToken}`)
+  
+  //cookies options
+  const newCookiesOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+  };
+
+  return res
+  .status(200)
+  .cookie("accessToken", accessToken,  newCookiesOptions)
+  .cookie("refreshToken", refreshToken,  newCookiesOptions)
+  .json(new ApiResponse(200, `Tokens refreshed successfully`, {accessToken, refreshToken}));
+  
+})
+
+export { registerUser, loginUser, logoutUser, refreshedAccessToken };
 
