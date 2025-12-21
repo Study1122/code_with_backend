@@ -264,7 +264,7 @@ const updatePassword = asyncHandler(async (req, res) =>{
   
   user.refreshTokens = undefined
   user.password = newPass
-  await user.save()
+  await user.save({validateBeforeSave: false})
   //save new pass to db
   
   //send res
