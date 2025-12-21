@@ -183,9 +183,13 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 //refreshToken end point 
 const refreshedAccessToken = asyncHandler( async (req, res) => {
-  const incomingRefreshedToken = req.cookies.refreshToken || req.body.refreshToken
-  if(!incomingRefreshedToken){
-    throw new ApiErrors(401, "Refresh Token missing!!!")
+  try{
+    const incomingRefreshedToken = req.cookies.refreshToken || req.body.refreshToken
+    if(!incomingRefreshedToken){
+      throw new ApiErrors(401, "Refresh Token missing!!!")
+    }
+  }catch(err){
+    throw new ApiErrors(401, "User not found or token expired!!, login again", {err})
   }
   //console.log("Token:", incomingRefreshedToken)
   let decodedRefreshedToken;
@@ -240,7 +244,7 @@ const updatePassword = asyncHandler(async (req, res) =>{
   const {pass, newPass, confPass} = req.body || {}
   //verify credientials
   if(!pass || !newPass || !confPass){
-    throw new ApiErrors(401, "All field required!!");
+    throw new ApiErrors(400, "All field required!!");
   }
   //newPass and confPass compaire
   if(newPass !== confPass){
@@ -248,7 +252,7 @@ const updatePassword = asyncHandler(async (req, res) =>{
   }
   //get pass from req 
   
-  const user = await User.findById(req.user?._id)
+  const user = await User.findById(req.user._id).select(+pass)
   if(!user){
     throw new ApiErrors(404, "User not found!!");
   }
@@ -258,13 +262,16 @@ const updatePassword = asyncHandler(async (req, res) =>{
     throw new ApiErrors(401, "Wronge Password!!!");
   }
   
+  user.refreshTokens = undefined
   user.password = newPass
-  user.save()
+  await user.save()
   //save new pass to db
   
   //send res
   res
   .status(200)
+  .clearCookie("accessToken")
+  .clearCookie("refreshToken")
   .json(new ApiResponse(200, "Password updated successfully"))
   
 });
