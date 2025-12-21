@@ -56,7 +56,6 @@ const registerUser = asyncHandler(async (req, res) => {
     const avatarUploadResponse = await uploadOnCloudinary(avatarLocalPath);
 
     if (!avatarUploadResponse?.url) {
-        //console.log("FILES →", req.files);
         throw new ApiErrors(
             422, "Avatar Image upload failed, please try again later"
         );
@@ -183,15 +182,16 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 //refreshToken end point 
 const refreshedAccessToken = asyncHandler( async (req, res) => {
+  let incomingRefreshedToken;
   try{
-    const incomingRefreshedToken = req.cookies.refreshToken || req.body.refreshToken
+    incomingRefreshedToken = req.cookies.refreshToken || req.body.refreshToken
     if(!incomingRefreshedToken){
       throw new ApiErrors(401, "Refresh Token missing!!!")
     }
   }catch(err){
     throw new ApiErrors(401, "User not found or token expired!!, login again", {err})
   }
-  //console.log("Token:", incomingRefreshedToken)
+
   let decodedRefreshedToken;
   try{
     decodedRefreshedToken = await jwt.verify(
@@ -211,18 +211,13 @@ const refreshedAccessToken = asyncHandler( async (req, res) => {
   //generate new refresh Token
   const {accessToken, refreshToken} = await  generateAccessAndRefreshTokens(user._id)
   
-  // remove old refresh token
-  user.refreshTokens = user.refreshTokens.filter(
-    token => token !== incomingRefreshedToken
-  );
-  
   // add new refresh token
+  user.refreshTokens = user.refreshTokens.filter(token => token !== incomingRefreshedToken);
   user.refreshTokens.push(refreshToken);
+
   
   // save once
   await user.save({ validateBeforeSave: false });
-    
-  //console.log(`OldRedreshToken: ${incomingRefreshedToken}, newRefreshToken: ${refreshToken}`)
   
   //cookies options
   const newCookiesOptions = {
@@ -262,16 +257,17 @@ const updatePassword = asyncHandler(async (req, res) =>{
     throw new ApiErrors(401, "Wronge Password!!!");
   }
   
-  user.refreshTokens = undefined
   user.password = newPass
+  user.refreshTokens = []
+  
   await user.save({validateBeforeSave: false})
   //save new pass to db
   
   //send res
   res
   .status(200)
-  .clearCookie("accessToken")
-  .clearCookie("refreshToken")
+  .clearCookie("accessToken") 
+  //.clearCookie("refreshToken")
   .json(new ApiResponse(200, "Password updated successfully"))
   
 });
@@ -282,15 +278,31 @@ const userAccountDetails = asyncHandler(async (req, res) =>{
   if(!email || !fullName){
     throw new ApiErrors(400, "All field required!!");
   }
+
+  //const updateUser = await User.findById(req.user._id)
+  //updateUser.fullName = fullName
+  //updateUser.email = email
+  //await updateUser.save({validateBeforeSave: true})
   
-  const user = await User.findById(req.user._id)
-  user.fullName = fullName
-  user.email = email
-  user.save({validateBeforeSave: true})
+  ///////////////////////(or)///////////////////////////////////
+  
+  const updateUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {email, fullName},
+    {new: true, runValidators: true}
+  );
+  
+  if(!updateUser){
+    throw new ApiErrors(400, "User not logged In!!");
+  }
+  
+  updateUser.password = undefined;
+  updateUser.refreshTokens = undefined;
   
   res
   .status(200)
-  .json(new ApiResponse(200,"Account updated successfully"), {user})
+  .json(new ApiResponse(200,"Account updated successfully", {user: updateUser})
+  );
 });
 
 export { registerUser, loginUser, 
