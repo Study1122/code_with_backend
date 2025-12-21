@@ -2,7 +2,9 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
-import { registerUser, loginUser, logoutUser, refreshedAccessToken, updatePassword } from "../controllers/user.controller.js";
+import { registerUser, loginUser, logoutUser, 
+         refreshedAccessToken, updatePassword, 
+         userAccountDetails } from "../controllers/user.controller.js";
 
 const router = Router();
 
@@ -32,4 +34,8 @@ router.route("/update_password").post(
   updatePassword
 )
 
-export default router;
+router.route("/update_account").post(
+  authMiddleware,
+  userAccountDetails
+)
+export default router

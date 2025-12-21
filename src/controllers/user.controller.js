@@ -275,8 +275,25 @@ const updatePassword = asyncHandler(async (req, res) =>{
   .json(new ApiResponse(200, "Password updated successfully"))
   
 });
+//Update user credantials
+const userAccountDetails = asyncHandler(async (req, res) =>{
+  //get creds from user body
+  const { email, fullName } = req.body || {}
+  if(!email || !fullName){
+    throw new ApiErrors(400, "All field required!!");
+  }
+  
+  const user = await User.findById(req.user._id)
+  user.fullName = fullName
+  user.email = email
+  user.save({validateBeforeSave: true})
+  
+  res
+  .status(200)
+  .json(new ApiResponse(200,"Account updated successfully"), {user})
+});
 
 export { registerUser, loginUser, 
 logoutUser, refreshedAccessToken, 
-updatePassword };
+updatePassword, userAccountDetails };
 
