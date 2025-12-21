@@ -51,7 +51,6 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!avatarLocalPath) {
         throw new ApiErrors(400, "Avatar is required");
     }
-    //console.log(req.files)
 
     //upload image to cloudinary, avatar'
     const avatarUploadResponse = await uploadOnCloudinary(avatarLocalPath);
@@ -180,9 +179,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   return res
     .clearCookie("accessToken", cookieOptions)
     .clearCookie("refreshToken", cookieOptions)
-    .json(new ApiResponse(200, "Logged out successfully"));
+    .json(new ApiResponse(200, `${user.username} logged out successfully`));
 });
-
 //refreshToken end point 
 const refreshedAccessToken = asyncHandler( async (req, res) => {
   const incomingRefreshedToken = req.cookies.refreshToken || req.body.refreshToken
@@ -235,7 +233,43 @@ const refreshedAccessToken = asyncHandler( async (req, res) => {
   .cookie("refreshToken", refreshToken,  newCookiesOptions)
   .json(new ApiResponse(200, `Tokens refreshed successfully`, {accessToken, refreshToken}));
   
-})
+});
+//Update Password
+const updatePassword = asyncHandler(async (req, res) =>{
+  //get password ceedntials
+  const {pass, newPass, confPass} = req.body || {}
+  //verify credientials
+  if(!pass || !newPass || !confPass){
+    throw new ApiErrors(401, "All field required!!");
+  }
+  //newPass and confPass compaire
+  if(newPass !== confPass){
+    throw new ApiErrors(400, "Confirm password did not matched!!");
+  }
+  //get pass from req 
+  
+  const user = await User.findById(req.user?._id)
+  if(!user){
+    throw new ApiErrors(404, "User not found!!");
+  }
+  //compaire db password with entered pass
+  let isPasswordMatched = await user.comparePassword(pass)
+  if(!isPasswordMatched){
+    throw new ApiErrors(401, "Wronge Password!!!");
+  }
+  
+  user.password = newPass
+  user.save()
+  //save new pass to db
+  
+  //send res
+  res
+  .status(200)
+  .json(new ApiResponse(200, "Password updated successfully"))
+  
+});
 
-export { registerUser, loginUser, logoutUser, refreshedAccessToken };
+export { registerUser, loginUser, 
+logoutUser, refreshedAccessToken, 
+updatePassword };
 

@@ -2,29 +2,34 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
-import { registerUser, loginUser, logoutUser, refreshedAccessToken } from "../controllers/user.controller.js";
+import { registerUser, loginUser, logoutUser, refreshedAccessToken, updatePassword } from "../controllers/user.controller.js";
 
 const router = Router();
 
 router.route("/register").post(
-    //middleware ;- upload a filed name 'avatar' and 'coverImage' from form-data
-    upload.fields([
-        {name: 'avatar', maxCount: 1},
-        {name: 'coverImage', maxCount: 1}
-    ]),
-    registerUser);
+  //middleware ;- upload a filed name 'avatar' and 'coverImage' from form-data
+  upload.fields([
+      {name: 'avatar', maxCount: 1},
+      {name: 'coverImage', maxCount: 1}
+  ]),
+  registerUser);
 
 router.route("/login").post(
-    loginUser
+  loginUser
 );
 
 router.route("/logout").post(
-    authMiddleware,
-    logoutUser
+  authMiddleware,
+  logoutUser
 );
 
 router.route("/refresh_token").post(
-    refreshedAccessToken
-  )
+  refreshedAccessToken
+)
+
+router.route("/update_password").post(
+  authMiddleware,
+  updatePassword
+)
 
 export default router;
