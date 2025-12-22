@@ -4,7 +4,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { registerUser, loginUser, logoutUser, 
          refreshedAccessToken, updatePassword, 
-         userAccountDetails } from "../controllers/user.controller.js";
+         userAccountDetails, currentUser } from "../controllers/user.controller.js";
 
 const router = Router();
 
@@ -37,5 +37,10 @@ router.route("/update_password").post(
 router.route("/update_account").post(
   authMiddleware,
   userAccountDetails
+)
+
+router.route("/").post(
+  authMiddleware,
+  currentUser
 )
 export default router

@@ -107,8 +107,11 @@ const registerUser = asyncHandler(async (req, res) => {
 //login user controller
 const loginUser = asyncHandler(async (req, res) => {
     //get credientials from req body
+    let token = req.cookies?.refreshToken;
+    if(token){
+      throw new ApiErrors(400, "User aleady logged in!!!")
+    }
     const { email, username, password } = req.body || {};
-
     //validation
     if (!(email || username)){
         throw new ApiErrors(400, "Email or username are required!!!");
@@ -153,9 +156,7 @@ const loginUser = asyncHandler(async (req, res) => {
     .status(200)
     .cookie("refreshToken", refreshToken, cookiesOptions)
     .cookie("accessToken", accessToken, cookiesOptions)
-    .json(new ApiResponse(200,`${existingUser.username} Login successful`, {
-            existingUser: loggedUser, accessToken, refreshToken
-        })
+    .json(new ApiResponse(200,`${existingUser.username} Login successful`, loggedUser)
     );
 });
 //logout user controller
@@ -304,8 +305,20 @@ const userAccountDetails = asyncHandler(async (req, res) =>{
   .json(new ApiResponse(200,"Account updated successfully", {user: updateUser})
   );
 });
+//Current user
+const currentUser = asyncHandler(async (req, res) => {
+  const userId = req.user?._id
+  const user = await User.findById(userId).select("-password -refreshTokens")
+  if(!user){
+    throw new ApiErrors(401, "User not logged in!!")
+  }
+  
+  res
+  .status(200)
+  .json(new ApiResponse(200, `Hello ${user.fullName}`, user));
+});
 
 export { registerUser, loginUser, 
 logoutUser, refreshedAccessToken, 
-updatePassword, userAccountDetails };
+updatePassword, userAccountDetails, currentUser };
 
