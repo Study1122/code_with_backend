@@ -1,8 +1,34 @@
-/.vscode
-/node_module
+# Dependencies
+node_modules/
 
-*.env
+# Build outputs
+dist/
+build/
+coverage/
+
+# Environment files
 .env
 .env.*
+!.env.example
 
-./dist
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Lock files (optional – some teams format these)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+public/temp/
+uploads/
+
+

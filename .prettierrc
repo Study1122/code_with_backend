@@ -1,6 +1,5 @@
-
 {
-  "singleQoute": false,
+  "singleQuote": false,
   "bracketSpacing": true,
   "tabWidth": 2,
   "semi": true,
