@@ -51,7 +51,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   //upload image to cloudinary, avatar'
-  const avatarUploadResponse = uploadOnCloudinary(avatarLocalPath);
+  const avatarUploadResponse = await uploadOnCloudinary(avatarLocalPath);
 
   if (!avatarUploadResponse?.url) {
     throw new ApiErrors(
@@ -63,7 +63,7 @@ const registerUser = asyncHandler(async (req, res) => {
   let coverImageUploadResponse;
 
   if (coverImageLocalPath) {
-    coverImageUploadResponse = uploadOnCloudinary(coverImageLocalPath);
+    coverImageUploadResponse = await uploadOnCloudinary(coverImageLocalPath);
     if (!coverImageUploadResponse?.url) {
       throw new ApiErrors(
         422,
@@ -375,7 +375,74 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", cookieOptions)
     .json(new ApiResponse(200, `${user.username} logged out successfully`));
 });
-
+//subscription controller
+const getSubscribersDetails = asyncHandler(async (req, res)=>{
+  const { username } = req.params;
+  if(!username || !username?.trim()){
+    throw new ApiErrors(401, "Username is missing!!!");
+  }
+  
+  const user = await User.findOne({username}).select("-password -refreshTokens")
+  if(!user){
+    throw new ApiErrors(401, "User not found!!");
+  }
+  
+  const channel = await User.aggregate([
+    {
+      $match:{
+        _id: user?._id
+      }
+    },
+    {
+      $lookup:{
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers"
+      }
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "channels"
+      }
+    },
+    {
+      $addFields: {
+        subscribersCount:{
+          $size: { $ifNull:
+            ["$subcribers",[]]
+          }
+        },
+        channelSubsToCount:{
+          $size: { $ifNull:
+            ["$channels",[]]
+          }
+        },
+        isSubscribed:{
+          $cond: {
+           if: {$in: [req.user?._id, "$subscribers.subscriber"]},
+           then: true,
+           else: false
+          }
+        }
+      }
+    },
+    {
+      $project:{
+        password: 0,
+        refreshTokens: 0
+      }
+    }
+  ])
+  
+  res
+  .status(200)
+  .json(new ApiResponse(200, "Subscriber details fetched successfully", channel)
+  );
+});
 
 export {
   registerUser,
@@ -386,5 +453,6 @@ export {
   userAccountDetails,
   updateAvatar,
   updateCoverImage,
-  currentUser
+  currentUser,
+  getSubscribersDetails
 };

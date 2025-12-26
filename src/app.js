@@ -38,28 +38,6 @@ app.get("/", (req, res) => {
   res.send("server is online!!!");
 });
 
-//without asyncHandler 
-/*
-app.get("/login", async (req, res, next)=>{
-  try{
-    const user = await User.findOne();
-    res.json(user);
-  }catch(err){
-    next(err);
-  }
-});
-
-//with asynHandler
-
-app.get("/login",
-  asyncHandler(async (req, res) => {
-    const user = await User.findOne();
-    res.json(user);
-  })
-);
-
-*/
-
 app.use("/api/v1/user", userRouter);
 
 // http://localhost:8000/api/v1/user/register
