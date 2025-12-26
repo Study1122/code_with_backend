@@ -438,9 +438,13 @@ const getSubscribersDetails = asyncHandler(async (req, res)=>{
     }
   ])
   
-  res
+  if(!channel?.length){
+    throw new ApiErrors(404, "channel not Exist!!");
+  }
+  
+  return res
   .status(200)
-  .json(new ApiResponse(200, "Subscriber details fetched successfully", channel)
+  .json(new ApiResponse(200, "Subscriber details fetched successfully", channel[0])
   );
 });
 
