@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 
@@ -14,11 +15,13 @@ const uploadOnCloudinary = async (localFilePath) => {
     if (!localFilePath) return null;
 
     //Upload image on cloudinary
-    const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
-    });
-
+    const response = await cloudinary.uploader
+    .upload(
+      localFilePath, 
+      {resource_type: "auto"}
+    );
     return response;
+    
   } catch (error) {
     console.error("🔥 CLOUDINARY ERROR:", error.message); // 👈 CRITICAL
     return null;

@@ -64,6 +64,8 @@ userSchema.methods.isPasswordCorrect = async function (password) {
   //compare given and encrpted pass and returna boolean value
   return await bcrypt.compare(password, this.password);
 };
+
+//Meyhode to generate Tokens
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {

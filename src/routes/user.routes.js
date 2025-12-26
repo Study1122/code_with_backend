@@ -9,7 +9,9 @@ import {
   refreshedAccessToken,
   updatePassword,
   userAccountDetails,
-  currentUser,
+  updateAvatar,
+  updateCoverImage,
+  currentUser
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -32,6 +34,19 @@ router.route("/refresh_token").post(refreshedAccessToken);
 router.route("/update_password").post(authMiddleware, updatePassword);
 
 router.route("/update_account").post(authMiddleware, userAccountDetails);
+
+router.route("/update_avatar")
+.post(
+  upload.single("avatar"),
+  authMiddleware,
+  updateAvatar
+)
+router.route("/update_cover_image")
+.post(
+  upload.single("coverImage"),
+  authMiddleware,
+  updateCoverImage
+)
 
 router.route("/").post(authMiddleware, currentUser);
 export default router;
