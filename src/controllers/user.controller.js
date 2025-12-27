@@ -1,3 +1,4 @@
+import mongoose, { Schema } from "mongoose";
 import { User } from "../models/user.model.js";
 import { ApiErrors } from "../utils/ApiErrors.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -390,7 +391,9 @@ const getSubscribersDetails = asyncHandler(async (req, res)=>{
   const channel = await User.aggregate([
     {
       $match:{
-        _id: user?._id
+        _id: user?._id 
+        //or
+        //_id = new mongoose.Types.ObjectId(req.user?._id)
       }
     },
     {
@@ -447,6 +450,67 @@ const getSubscribersDetails = asyncHandler(async (req, res)=>{
   .json(new ApiResponse(200, "Subscriber details fetched successfully", channel[0])
   );
 });
+//get watch History
+const getWatchHistory= asyncHandler(async (req, res)=>{
+  
+  //use aggregate directly 
+  const user = await User.aggregate([
+      {
+        $match:{
+          _id: new mongoose.Types.ObjectId(req.user?._id)
+        }
+      },
+      {
+        $lookup:{
+          from: "videos",
+          localField: "watchHistory",
+          foreignField: "_id",
+          as: "watchHistory",
+          pipeline:[
+            {
+              //further pipeline for lookup owner of video
+              $lookup:{
+                from: "users",
+                localField:"owner",
+                foreignField:"_id",
+                as:"owner",
+                //sub-pipeline for owner
+                pipeline:[
+                  {
+                    $project:{
+                      username: 1,
+                      fullName: 1,
+                      avatar: 1,
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              $addFields:{
+                owner:{
+                  $first: "$owner"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        $project:{
+          watchHistory:1
+        }
+      }
+    ]);
+    if(!user?.length){
+      throw new ApiErrors(404, "User not found!!!")
+    }
+  
+  res
+  .status(200)
+  .json(new ApiResponse(200,"Watch History fetched successfully", user[0]))
+  
+});
 
 export {
   registerUser,
@@ -458,5 +522,6 @@ export {
   updateAvatar,
   updateCoverImage,
   currentUser,
-  getSubscribersDetails
+  getSubscribersDetails,
+  getWatchHistory
 };

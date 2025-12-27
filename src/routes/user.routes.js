@@ -12,7 +12,8 @@ import {
   updateAvatar,
   updateCoverImage,
   currentUser,
-  getSubscribersDetails
+  getSubscribersDetails,
+  getWatchHistory
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -52,5 +53,7 @@ router.route("/update_cover_image")
 router.route("/").get(authMiddleware, currentUser);
 
 router.route("/subscriber_details/:username").get(authMiddleware, getSubscribersDetails);
+
+router.route("/watch_history/:username").get(authMiddleware, getWatchHistory);
 
 export default router;
